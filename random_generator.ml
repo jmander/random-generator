@@ -37,16 +37,23 @@ let lift f x = fun r -> f r x
 (** 'a gen is a monad *)
 let map f gen = fun rand -> f (gen rand)
 let map' gen f = map f gen
+let (>|=) g f = map f g
+
+let map2 f a b r = f (a r) (b r)
+let map3 f a b c r = f (a r) (b r) (c r)
+let map4 f a b c d r = f (a r) (b r) (c r) (d r)
 
 let app f gen = fun rand -> f rand (gen rand)
 let app' gen f = app f gen
 
 let pure f = fun _ -> f
+let (<$>) f g = app f g
 
 let return x = fun _ -> x
 let bind f gen = fun rand -> f (gen rand) rand
 let bind' gen f = bind f gen
 let join gen = fun rand -> gen rand rand
+let (>>=) g f = bind f g
 
 let rec fix derec_gen param =
   fun rand -> derec_gen (fix derec_gen) param rand
@@ -63,8 +70,24 @@ let bool r = Random.State.bool r
 let make_int a b r = a + Random.State.int r (b - a)
 
 let split_int n r =
+  if n<0 then invalid_arg "split_int";
   let k = Random.State.int r (n + 1) in
   (k, n - k)
+
+let split_int_nary n ~into r =
+  if n<0 || into < 1 then invalid_arg "split_int_nary";
+  let rec split_rec n ~into acc = match into with
+    | 0 -> assert false
+    | 1 -> n::acc
+    | _ ->
+        let k = Random.State.int r (n+1) in
+        let left = k and right = n-k in
+        (* divide and conquer *)
+        let acc = split_rec left ~into:(into/2) acc in
+        let acc = split_rec right ~into:(into - into/2) acc in
+        acc
+  in
+  split_rec n ~into []
 
 let make_char start len r =
   let n = Random.State.int r len in
@@ -86,6 +109,17 @@ let select li r =
 
 let choose li = join (select li)
 
+let split_list n l =
+  split_int_nary n ~into:(List.length l)
+
+let opt ar r =
+  if Random.State.bool r then Some (ar r) else None
+
+let pair a b = map2 (fun x y -> x,y) a b
+
+let triple a b c = map3 (fun x y z -> x,y,z) a b c
+
+let quad a b c d = map4 (fun x y z w -> x,y,z,w) a b c d
 
 (** backtracking operator *)
 type 'a backtrack_gen = 'a option gen
