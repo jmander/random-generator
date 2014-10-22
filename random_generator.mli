@@ -43,6 +43,10 @@ type random_state = Random.State.t
 type 'a gen = random_state -> 'a
 
 val run : 'a gen -> random_state -> 'a
+val run' : random_state -> 'a gen -> 'a
+
+val run_self_init : 'a gen -> 'a
+(** Use {!Random.State.make_self_init} to generate a value *)
 
 (** {2 Value generators and combinators} *)
 

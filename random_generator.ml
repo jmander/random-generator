@@ -31,6 +31,11 @@
 type random_state = Random.State.t
 type 'a gen = random_state -> 'a
 let run r = r
+let run' g r = r g
+
+let run_self_init g =
+  let r = Random.State.make_self_init () in
+  g r
 
 let lift f x = fun r -> f r x
 
