@@ -114,6 +114,13 @@ let select li r =
 
 let choose li = join (select li)
 
+let repeat len g r =
+  let rec _make_list ar st acc n =
+    if n = 0 then acc else
+      let x = g r in
+      _make_list ar st (x::acc) (n-1)
+  in _make_list g r [] len
+
 let split_list n l =
   split_int_nary n ~into:(List.length l)
 

@@ -83,6 +83,9 @@ type 'a nonempty_list = 'a list
 val select : 'a nonempty_list -> 'a gen
 val choose : 'a gen nonempty_list -> 'a gen
 
+val repeat : int -> 'a gen -> 'a list gen
+(** Lists of given length exactly *)
+
 val split_list : int -> _ list -> int list gen
 (** [split_list n l] splits the integer [n] into a list [i1; ...; ik]
     such that [k = List.length l], and [i1 + ... + ik = n].
