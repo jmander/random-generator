@@ -181,6 +181,17 @@ module Fuel = struct
       | None, _ | _, None -> None
       | Some v1, Some v2 -> Some (v1, v2)
 
+  let list_ split gen = fun random fuel ->
+    let rec _flat_map f acc = function
+      | [] -> Some (List.rev acc)
+      | x :: tail ->
+          match f random x with
+          | None -> None
+          | Some y -> _flat_map f (y :: acc) tail
+    in
+    let fuels = split fuel random in
+    _flat_map gen [] fuels
+
   let choose li = fun random fuel ->
     let project gen =
       match gen random fuel with
@@ -202,3 +213,12 @@ let binary gen1 gen2 merge =
     (tick (prod split_int gen1 gen2))
     (fun (v1, v2) -> merge v1 v2)
 
+let nary gen merge =
+  let split_fuel f =
+    make_int 1 f >>= fun into ->
+    split_int_nary f ~into
+  in
+  let open Fuel in
+  map'
+    (tick (list_ split_fuel gen))
+    merge

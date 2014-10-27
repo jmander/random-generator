@@ -296,6 +296,8 @@ module Fuel : sig
   val prod : (int -> (int * int) gen) ->
     'a fueled -> 'b fueled -> ('a * 'b) fueled
 
+  val list_ : (int -> int list gen) -> 'a fueled -> 'a list fueled
+
   val choose : 'a fueled list -> 'a fueled
   (** For a given amount of fuel, we will only choose among the
       generators that can produce a term. *)
@@ -368,5 +370,8 @@ val unary : 'a fueled -> ('a -> 'b) -> 'b fueled
 (** will do a tick *)
 
 val binary : 'a fueled -> 'b fueled -> ('a -> 'b -> 'c) -> 'c fueled
-(** will do a tick and use split_int *)
+(** will do a tick and use {!split_int} *)
 
+val nary : 'a fueled -> ('a list -> 'b) -> 'b fueled
+(** Will do a tick, use {!split_int_nary}, produce a list of ['a] and
+    feed it to the function to obtain a ['b] *)
