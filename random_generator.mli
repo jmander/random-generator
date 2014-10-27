@@ -185,6 +185,12 @@ val (>>=) : 'a gen -> ('a -> 'b gen) -> 'b gen
 ]}
 *)
 
+val join_list : 'a gen list -> 'a list gen
+(** collect the results of all the generators in the list *)
+
+val bind_list : ('a -> 'b gen) -> 'a gen list -> 'b list gen
+val bind_list' : 'a gen list -> ('a -> 'b gen) -> 'b list gen
+
 
 (** {2 parametrized fixpoint} *)
 

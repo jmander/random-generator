@@ -60,6 +60,19 @@ let bind' gen f = bind f gen
 let join gen = fun rand -> gen rand rand
 let (>>=) g f = bind f g
 
+let join_list l r =
+  List.map (fun gen -> gen r) l
+
+let bind_list f l r =
+  let rec _flat_map l acc = match l with
+    | [] -> List.rev acc
+    | x::tail ->
+        let y = x r in
+        _flat_map tail (f y r :: acc)
+  in _flat_map l []
+
+let bind_list' l f r = bind_list f l r
+
 let rec fix derec_gen param =
   fun rand -> derec_gen (fix derec_gen) param rand
 
