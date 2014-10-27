@@ -297,10 +297,16 @@ module Fuel : sig
   val map : ('a -> 'b) -> 'a fueled -> 'b fueled
   val map' : 'a fueled -> ('a -> 'b) -> 'b fueled
 
+  val cond : bool -> 'a fueled -> 'a fueled
+
   val zero : 'a -> 'a fueled
   val tick : 'a fueled -> 'a fueled
   val prod : (int -> (int * int) gen) ->
     'a fueled -> 'b fueled -> ('a * 'b) fueled
+
+  val tick_delay : (unit -> 'a fueled) -> 'a fueled
+  (** Same as {!tick}, but only evaluate the fueled generator if
+      there is enough fuel *)
 
   val list_ : (int -> int list gen) -> 'a fueled -> 'a list fueled
 

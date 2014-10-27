@@ -123,6 +123,7 @@ type 'a nonempty_list = 'a list
 
 let select li r =
   let len = List.length li in
+  if len=0 then invalid_arg "select";
   List.nth li (Random.State.int r len)
 
 let choose li = join (select li)
@@ -135,6 +136,7 @@ let repeat len g r =
   in _make_list g r [] len
 
 let split_list n l =
+  if l=[] then invalid_arg "split_list";
   split_int_nary n ~into:(List.length l)
 
 let opt ar r =
@@ -179,6 +181,9 @@ module Fuel = struct
       | Some x -> Some (f x)
   let map' f gen = map gen f
 
+  let cond b gen random fuel =
+    if b then gen random fuel else None
+
   let zero v _random = function
     | 0 -> Some v
     | _ -> None
@@ -187,6 +192,11 @@ module Fuel = struct
     let fuel = fuel - 1 in
     if fuel < 0 then None
     else gen random fuel
+
+  let tick_delay gen random fuel =
+    let fuel = fuel - 1 in
+    if fuel < 0 then None
+    else (gen ()) random fuel
 
   let prod split gen1 gen2 = fun random fuel ->
     let fuel1, fuel2 = split fuel random in
@@ -228,10 +238,12 @@ let binary gen1 gen2 merge =
 
 let nary gen merge =
   let split_fuel f =
+    assert (f >= 2);
     make_int 1 f >>= fun into ->
     split_int_nary f ~into
   in
   let open Fuel in
   map'
-    (tick (list_ split_fuel gen))
+    (fun random fuel ->
+      if fuel < 3 then None else list_ split_fuel gen random (fuel-1))
     merge
