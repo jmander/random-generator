@@ -364,7 +364,7 @@ end
 val nullary : 'a -> 'a fueled
 (** zero *)
 
-val unary : 'a fueled -> ('a -> 'a) -> 'a fueled
+val unary : 'a fueled -> ('a -> 'b) -> 'b fueled
 (** will do a tick *)
 
 val binary : 'a fueled -> 'b fueled -> ('a -> 'b -> 'c) -> 'c fueled
