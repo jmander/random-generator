@@ -91,6 +91,9 @@ val split_list : int -> _ list -> int list gen
     such that [k = List.length l], and [i1 + ... + ik = n].
     @raise Invalid_argument if [n<0] *)
 
+val shuffle : 'a list -> 'a list gen
+(** returns a (uniform) permutation of the list *)
+
 (** Option combinators *)
 
 val opt : 'a gen -> 'a option gen
