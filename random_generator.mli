@@ -36,8 +36,8 @@ type random_state = Random.State.t
 
     Use [Random.get_state ()] to get the current (global) state of the
     Random module, or [Random.State.make : int array -> Random.State.tt]
-    or [Random.State.self_init () : unit -> Random.State.t] to generate fresh,
-    independent state.
+    or [Random.State.make_self_init () : unit -> Random.State.t] to generate
+    fresh, independent state.
 *)
 
 type 'a gen = random_state -> 'a
@@ -57,8 +57,13 @@ val uppercase : char gen
 (** base combinators names are adapted from Kaputt.Generator *)
 val unit : unit gen
 val make_int : int -> int -> int gen
+val make_nativeint : nativeint -> nativeint -> nativeint gen
+val make_int32 : int32 -> int32 -> int32 gen
+val make_int64 : int64 -> int64 -> int64 gen
+val make_float : float -> float -> float gen
 val string : int gen -> char gen -> string gen
 val bool : bool gen
+val bits : int gen
 
 val split_int : int -> (int * int) gen
 (** [split_int n] returns two integers [(i,k)] each in the interval
