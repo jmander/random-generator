@@ -1,12 +1,12 @@
-opam-version: "1"
+opam-version: "1.2"
+name: "random-generator"
+version: "0.1"
 maintainer: ["gabriel.scherer@gmail.com" "simon.cruanes@inria.fr"]
-build: [
-    [make "all" "install"]
-]
-remove: [
-    ["ocamlfind" "remove" "random-generator"]
-]
-depends: ["ocamlfind"]
-tags: [ "random" "generator" "fuel" ]
+authors: ["gabriel.scherer@gmail.com" "simon.cruanes@inria.fr"]
 homepage: "https://github.com/gasche/random-generator"
-
+tags: ["random" "generator" "fuel"]
+build: [make "all"]
+install: [make "install"]
+remove: ["ocamlfind" "remove" "random-generator"]
+depends: "ocamlfind"
+dev-repo: "https://github.com/gasche/random-generator"
