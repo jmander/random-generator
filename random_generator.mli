@@ -43,6 +43,10 @@ type random_state = Random.State.t
 type 'a gen = random_state -> 'a
 
 val run : 'a gen -> random_state -> 'a
+val run' : random_state -> 'a gen -> 'a
+
+val run_self_init : 'a gen -> 'a
+(** Use {!Random.State.make_self_init} to generate a value *)
 
 (** {2 Value generators and combinators} *)
 
@@ -63,7 +67,14 @@ val bits : int gen
 
 val split_int : int -> (int * int) gen
 (** [split_int n] returns two integers [(i,k)] each in the interval
-    [[0;n]] such that [i + k = n] *)
+    [[0;n]] such that [i + k = n]
+    @raise Invalid_argument if [n < 0] *)
+
+val split_int_nary : int -> into:int -> int list gen
+(** [split_int_nary n ~into] returns a list of [into] integers,
+    all of which are in the interval [[0;n]] and whose sum
+    is [n]
+    @raise Invalid_argument if [n<0 || into < 1]*)
 
 (** list combinators *)
 
@@ -77,13 +88,35 @@ type 'a nonempty_list = 'a list
 val select : 'a nonempty_list -> 'a gen
 val choose : 'a gen nonempty_list -> 'a gen
 
+val repeat : int -> 'a gen -> 'a list gen
+(** Lists of given length exactly *)
+
+val split_list : int -> _ list -> int list gen
+(** [split_list n l] splits the integer [n] into a list [i1; ...; ik]
+    such that [k = List.length l], and [i1 + ... + ik = n].
+    @raise Invalid_argument if [n<0] *)
+
 val shuffle : 'a list -> 'a list gen
 (** returns a (uniform) permutation of the list *)
+
+(** Option combinators *)
+
+val opt : 'a gen -> 'a option gen
+
+(** Tuple combinators *)
+
+val pair : 'a gen -> 'b gen -> ('a * 'b) gen
+
+val triple : 'a gen -> 'b gen -> 'c gen -> ('a * 'b * 'c) gen
+
+val quad : 'a gen -> 'b gen -> 'c gen -> 'd gen -> ('a * 'b * 'c * 'd) gen
 
 (** {2 ['a gen] is a functor} *)
 
 val map : ('a -> 'b) -> 'a gen -> 'b gen
 val map' : 'a gen -> ('a -> 'b) -> 'b gen
+
+val (>|=) : 'a gen -> ('a -> 'b) -> 'b gen
 
 (** The functor's [map] is very useful to post-process the result of
     a random generator.
@@ -99,12 +132,20 @@ val map' : 'a gen -> ('a -> 'b) -> 'b gen
     this simple transformation on ...".
 *)
 
+val map2 : ('a -> 'b -> 'c) -> 'a gen -> 'b gen -> 'c gen
+val map3 : ('a -> 'b -> 'c -> 'd) -> 'a gen -> 'b gen -> 'c gen -> 'd gen
+val map4 : ('a -> 'b -> 'c -> 'd -> 'e) -> 'a gen -> 'b gen -> 'c gen -> 'd gen -> 'e gen
+
+(** We also define higher-arity versions of {!map} *)
+
 (** {2 ['a gen] is applicative} *)
 
 val app : ('a -> 'b) gen -> 'a gen -> 'b gen
 val app' : 'a gen -> ('a -> 'b) gen -> 'b gen
 
 val pure : 'a -> 'a gen
+
+val (<$>) : ('a -> 'b) gen -> 'a gen -> 'b gen
 
 (** Applicative combinators are useful to lift a function applied to
     pure arguments into a function applied to generators. You would
@@ -122,6 +163,8 @@ val return : 'a -> 'a gen (** synonym of [pure] *)
 val bind : ('a -> 'b gen) -> 'a gen -> 'b gen
 val bind' : 'a gen -> ('a -> 'b gen) -> 'b gen
 val join : 'a gen gen -> 'a gen
+
+val (>>=) : 'a gen -> ('a -> 'b gen) -> 'b gen
 
 (** Monad combinators are useful when you need an intermediate random
     result to return not a random value ([map] is enough for this) but
@@ -149,6 +192,12 @@ val join : 'a gen gen -> 'a gen
     let my_gen = choose [make_int 0 10; make_int 0 max_int]
 ]}
 *)
+
+val join_list : 'a gen list -> 'a list gen
+(** collect the results of all the generators in the list *)
+
+val bind_list : ('a -> 'b gen) -> 'a gen list -> 'b list gen
+val bind_list' : 'a gen list -> ('a -> 'b gen) -> 'b list gen
 
 
 (** {2 parametrized fixpoint} *)
@@ -256,10 +305,18 @@ module Fuel : sig
   val map : ('a -> 'b) -> 'a fueled -> 'b fueled
   val map' : 'a fueled -> ('a -> 'b) -> 'b fueled
 
+  val cond : bool -> 'a fueled -> 'a fueled
+
   val zero : 'a -> 'a fueled
   val tick : 'a fueled -> 'a fueled
   val prod : (int -> (int * int) gen) ->
     'a fueled -> 'b fueled -> ('a * 'b) fueled
+
+  val tick_delay : (unit -> 'a fueled) -> 'a fueled
+  (** Same as {!tick}, but only evaluate the fueled generator if
+      there is enough fuel *)
+
+  val list_ : (int -> int list gen) -> 'a fueled -> 'a list fueled
 
   val choose : 'a fueled list -> 'a fueled
   (** For a given amount of fuel, we will only choose among the
@@ -329,9 +386,12 @@ end
 val nullary : 'a -> 'a fueled
 (** zero *)
 
-val unary : 'a fueled -> ('a -> 'a) -> 'a fueled
+val unary : 'a fueled -> ('a -> 'b) -> 'b fueled
 (** will do a tick *)
 
 val binary : 'a fueled -> 'b fueled -> ('a -> 'b -> 'c) -> 'c fueled
-(** will do a tick and use split_int *)
+(** will do a tick and use {!split_int} *)
 
+val nary : 'a fueled -> ('a list -> 'b) -> 'b fueled
+(** Will do a tick, use {!split_int_nary}, produce a list of ['a] and
+    feed it to the function to obtain a ['b] *)
